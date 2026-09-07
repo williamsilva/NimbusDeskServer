@@ -1,0 +1,94 @@
+spring:
+  # Postgres não cria o banco pela URL - o banco "nimbusdesk" precisa existir antes do primeiro
+  # boot (ver V20260907_01__init.sql). Defaults abaixo assumem o Postgres nativo local (mesma
+  # instância usada por CardsyncServer/NimbusAuth, usuário/senha postgres/postgres) - não o
+  # Postgres do docker-compose (que continua usando nimbusdesk/changeme-local-only, setado
+  # explicitamente via .env para esse caminho).
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_DATABASE:nimbusdesk}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          nimbusdesk-bff:
+            provider: nimbusdesk-as
+            client-id: ${NIMBUSDESK_BFF_CLIENT_ID:nimbusdesk-bff}
+            client-secret: ${NIMBUSDESK_BFF_CLIENT_SECRET:changeit-dev}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile
+        provider:
+          nimbusdesk-as:
+            # authorization-uri é enviado ao browser (redirect) - precisa ser o issuer público
+            # (localhost). token/jwk-set/user-info são chamados pelo backend em si - usam
+            # NIMBUS_AUTH_INTERNAL_BASE_URL, que diverge do issuer quando o backend roda
+            # containerizado (docker compose) e o NimbusAuth roda nativamente no host (ver
+            # comentário de NIMBUS_AUTH_INTERNAL_BASE_URL no .env.example).
+            authorization-uri: ${nimbus.security.issuer}/oauth2/authorize
+            token-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/oauth2/token
+            jwk-set-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/oauth2/jwks
+            user-info-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/userinfo
+            user-name-attribute: sub
+
+server:
+  # 9094 - próxima porta livre da convenção do workspace (NimbusAuth=9090, CardSync=9091,
+  # NimbusFlow=9092, NimbusNovax=9093), evita colidir com os backends já existentes quando todos
+  # rodam lado a lado na mesma máquina.
+  port: ${SERVER_PORT:9094}
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: false # dev; em prod true
+        same-site: LAX
+
+# Fase 2 do levantamento de duplicação: security/nimbusauth/email eram nimbusdesk.* aqui -
+# viraram nimbus.* (prefixo neutro compartilhado com NimbusCommonsServer), com os mesmos env vars
+# de sempre do lado direito (nenhuma mudança de env var no Railway, só o caminho na YAML).
+nimbus:
+  security:
+    # Issuer do NimbusAuth (real, rodando localmente fora do docker-compose - nem o NimbusAuth
+    # nem o Cardsync são dockerizados nesta workspace).
+    issuer: ${NIMBUS_AUTH_ISSUER:http://localhost:9090}
+
+    cookies:
+      domain: ${NIMBUSDESK_COOKIE_DOMAIN:}
+      secure: ${NIMBUSDESK_COOKIE_SECURE:false}
+      same-site: ${NIMBUSDESK_COOKIE_SAMESITE:Lax}
+
+    resource-server:
+      enabled: true
+      jwk-set-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/oauth2/jwks
+
+    web:
+      spa-base-url: ${NIMBUSDESK_SPA_BASE_URL:http://localhost:4204}
+      allowed-origins:
+        - ${CORS_ALLOWED_ORIGINS:http://localhost:4204}
+
+  nimbusauth:
+    # Mesma base do jwk-set-uri acima (nimbus.security.resource-server.jwk-set-uri), exposta
+    # separadamente pra ser reaproveitada nas chamadas REST de perfil/senha
+    # (com.nimbussystems.commons.security.NimbusAuthClient).
+    base-url: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}
+    # Mesmo secret compartilhado já configurado no NimbusAuth e no CardsyncServer - protege
+    # /internal/users (com.nimbusdesk.common.security.NimbusAuthInternalClient/UserDirectoryService).
+    internal-api-secret: ${NIMBUS_INTERNAL_API_SECRET:dev-internal-secret-change-me}
+
+  # com.nimbussystems.commons.notification.mail.EmailProperties - fake por default (só loga, sem
+  # credencial nenhuma necessária em dev).
+  email:
+    impl: ${NIMBUSDESK_EMAIL_IMPL:fake}
+    from-name: ${NIMBUSDESK_EMAIL_FROM_NAME:NimbusDesk}
+    from-email: ${NIMBUSDESK_EMAIL_FROM_EMAIL:naoresponda@nimbussystems.com.br}
+    # Base pública DESTE backend (não a de produção!) - com.nimbussystems.commons.notification.
+    # mail.EmailProperties#publicBaseUrl, usada pela lib pra montar URLs absolutas quando
+    # necessário (ex.: link de anexo/imagem num e-mail).
+    public-base-url: ${NIMBUSDESK_API_PUBLIC_BASE_URL:http://localhost:${SERVER_PORT:9094}}
+    brevo:
+      base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
+      api-key: ${BREVO_API_KEY:}

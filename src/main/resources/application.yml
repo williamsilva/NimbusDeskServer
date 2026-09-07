@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: nimbusdesk-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  # Sessão HTTP do BFF (cookie), separada da sessão de login do NimbusAuth. Schema criado via
+  # Flyway (V2__spring_session_schema.sql), não pelo Spring Session.
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
+
+  # Default do Spring (1MB) é baixo demais pra alguns anexos - 25MB é o limite de negócio por
+  # arquivo; a margem aqui é só pra múltiplos arquivos por request.
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 100MB
+
+  mvc:
+    problemdetails:
+      # RFC 7807: ResponseStatusException passa a devolver um corpo JSON estruturado
+      # (type/title/status/detail/instance) com o "reason" no campo "detail" - o frontend usa isso
+      # pra distinguir erros específicos (ex.: PASSWORD_CURRENT_INVALID) de um erro genérico, sem
+      # precisar de server.error.include-message=always (que exporia a mensagem de QUALQUER
+      # exceção, não só as ResponseStatusException já cuidadosamente escritas no código). Todo
+      # ResponseStatusException já existente no projeto usa mensagens curtas e não sensíveis (ex.:
+      # "Missing BACKUP_PROCESS authority") - seguro de expor como "detail".
+      enabled: true
+
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        # Nome distinto do padrão "SESSION" - senão colide com o cookie de sessão do CardsyncServer
+        # (mesmo nome, mesmo domínio "localhost", só porta diferente - cookies HTTP não diferenciam
+        # por porta) e cada app sobrescreve o cookie do outro no navegador, deslogando os dois.
+        name: NIMBUSDESK_SESSION
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

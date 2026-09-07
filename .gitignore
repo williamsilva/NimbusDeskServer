@@ -1,0 +1,24 @@
+# Gradle
+build/
+.gradle/
+out/
+bin/
+target/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

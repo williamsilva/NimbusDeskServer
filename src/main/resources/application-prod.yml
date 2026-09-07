@@ -1,0 +1,89 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          nimbusdesk-bff:
+            provider: nimbusdesk-as
+            client-id: ${NIMBUSDESK_BFF_CLIENT_ID:nimbusdesk-bff}
+            client-secret: ${NIMBUSDESK_BFF_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile
+        provider:
+          nimbusdesk-as:
+            # Tudo pelo issuer público (mesmo padrão do CardsyncServer, ver CARDSYNC_ISSUER em
+            # CardsyncServer/application-prod.yml) - a rede privada do Railway
+            # (NIMBUS_AUTH_INTERNAL_BASE_URL) era usada aqui como "otimização" pra chamadas
+            # backend->backend, mas nunca funcionou de fato em produção (hostname/porta interno
+            # incorretos ou private networking não habilitado entre os dois serviços) - toda
+            # chamada de token/jwk-set/user-info falhava, causando os 502/504 em
+            # /bff/v1/me/profile. NIMBUS_AUTH_INTERNAL_BASE_URL fica só como default local (ver
+            # application-dev.yml).
+            authorization-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/authorize
+            token-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/token
+            jwk-set-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/jwks
+            user-info-uri: ${NIMBUS_AUTH_ISSUER}/userinfo
+            user-name-attribute: sub
+
+server:
+  ssl:
+    enabled: false
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: LAX
+
+# Fase 2 do levantamento de duplicação: security/nimbusauth/email eram nimbusdesk.* aqui -
+# viraram nimbus.* (prefixo neutro compartilhado com NimbusCommonsServer), com os mesmos env vars
+# de sempre do lado direito (nenhuma mudança de env var no Railway, só o caminho na YAML).
+nimbus:
+  security:
+    issuer: ${NIMBUS_AUTH_ISSUER}
+
+    cookies:
+      domain: ${NIMBUSDESK_COOKIE_DOMAIN}
+      secure: ${NIMBUSDESK_COOKIE_SECURE:true}
+      same-site: ${NIMBUSDESK_COOKIE_SAMESITE:Lax}
+
+    resource-server:
+      enabled: ${NIMBUSDESK_RESOURCE_SERVER_ENABLED:true}
+      jwk-set-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/jwks
+
+    web:
+      spa-base-url: ${NIMBUSDESK_SPA_BASE_URL}
+      allowed-origins:
+        - ${NIMBUSDESK_ALLOWED_ORIGIN}
+
+  nimbusauth:
+    base-url: ${NIMBUS_AUTH_ISSUER}
+    # Mesmo secret compartilhado já configurado no NimbusAuth e no CardsyncServer (Railway) -
+    # protege /internal/users (NimbusAuthInternalClient/UserDirectoryService).
+    internal-api-secret: ${NIMBUS_INTERNAL_API_SECRET}
+
+  # com.nimbussystems.commons.notification.mail.EmailProperties - default "fake" DE PROPÓSITO
+  # (mesmo em produção): nenhum evento de negócio dispara envio ainda, então não há motivo pra
+  # exigir credencial nenhuma configurada só pra este deploy não quebrar o boot. Trocar pra
+  # "api_key" (Brevo) só quando alguém configurar de verdade via env var OU pela tela
+  # Configurações > E-mail (que sobrescreve o valor abaixo, ver EmailSettingsService).
+  email:
+    impl: ${NIMBUSDESK_EMAIL_IMPL:fake}
+    from-name: ${NIMBUSDESK_EMAIL_FROM_NAME:NimbusDesk}
+    from-email: ${NIMBUSDESK_EMAIL_FROM_EMAIL:naoresponda@nimbussystems.com.br}
+    # Base pública deste próprio backend - com.nimbussystems.commons.notification.mail.
+    # EmailProperties#publicBaseUrl. Default já aponta pro host real de produção (mesmo de
+    # NIMBUSDESK_ALLOWED_ORIGIN/environment.prod.ts no NimbusDeskWeb), a env var só existe pra
+    # permitir trocar sem novo deploy se o domínio mudar.
+    public-base-url: ${NIMBUSDESK_API_PUBLIC_BASE_URL:https://desk-api.nimbussystems.com.br}
+    brevo:
+      base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
+      api-key: ${BREVO_API_KEY:}
