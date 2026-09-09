@@ -15,10 +15,10 @@ import org.springframework.stereotype.Service;
 
 /**
  * Orquestra o backup sob demanda (tela Configurações &gt; Backup): monta um único zip com os
- * alvos pedidos (banco nimbusdesk e/ou banco nimbusauth). Um alvo que falhar não derruba os
- * demais - entra como uma linha em erros.txt dentro do próprio zip (mesmo desenho do
- * BackupService do CardsyncServer/NimbusFlowServer). Sem alvo de storage de arquivos (FILES) -
- * o NimbusDesk ainda não tem isso, ver BackupTarget.
+ * alvos pedidos (banco nimbusdesk, banco nimbusauth e/ou bucket de anexos). Um alvo que falhar
+ * não derruba os demais - entra como uma linha em erros.txt dentro do próprio zip (mesmo desenho
+ * do BackupService do CardsyncServer/NimbusFlowServer, de onde {@code FILES} foi portado em
+ * 2026-09-09).
  */
 @Slf4j
 @Service
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class BackupService {
 
   private final PgDumpRunner pgDumpRunner;
+  private final S3VolumeZipper s3VolumeZipper;
   private final NimbusAuthInternalClient nimbusAuthInternalClient;
 
   public byte[] execute(List<BackupTarget> targets) {
@@ -38,6 +39,14 @@ public class BackupService {
       }
       if (targets.contains(BackupTarget.NIMBUSAUTH_DB)) {
         addEntry(zipOut, "nimbusauth.dump", "banco nimbusauth", nimbusAuthInternalClient::fetchDatabaseBackup, errors);
+      }
+      if (targets.contains(BackupTarget.FILES)) {
+        try {
+          s3VolumeZipper.zipInto(zipOut, "arquivos");
+        } catch (Exception e) {
+          log.warn("Falha ao compactar o storage de anexos para o backup: {}", e.getMessage(), e);
+          errors.add("Storage de anexos: " + e.getMessage());
+        }
       }
 
       if (!errors.isEmpty()) {
