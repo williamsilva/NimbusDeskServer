@@ -21,11 +21,16 @@ import org.springframework.web.client.RestClient;
  * quem trata a tolerância a falha (rede/timeout/404/4xx/5xx) é o chamador
  * (EquipamentoSyncService), com um try/catch amplo, exatamente como pedido no PROJECT_SPEC.md.
  *
- * <p>{@link EquipamentoDto} é uma suposição razoável do shape de resposta (campos batendo com
- * {@code EquipamentoRef} local: numeroPatrimonio/descricao/status, mais {@code localizacaoAtual}
- * novo, ver PROJECT_SPEC.md) - o contrato real não pôde ser conferido porque o endpoint ainda não
- * existia no momento desta implementação. {@code @JsonIgnoreProperties(ignoreUnknown = true)}
- * torna a desserialização tolerante a campos extras que o NimbusFlowServer venha a incluir.
+ * <p>{@link EquipamentoDto} espelha exatamente com.nimbusflow.patrimonio.dto.response.
+ * EquipamentoSyncResponse (contrato conferido em 2026-09-09 contra o endpoint real, já publicado
+ * no NimbusFlowServer) - {@code statusOperacional}/{@code atualizadoEm}, NÃO {@code status}/
+ * {@code updatedAt} (nomes usados numa suposição inicial, antes do endpoint existir, e que nunca
+ * bateram com a resposta real - bug silencioso: Jackson não falha em campo desconhecido, só deixa
+ * os 2 campos sempre {@code null} localmente). {@code numeroPatrimonio} chega como número no JSON
+ * (Integer do lado do NimbusFlowServer) mas fica {@code String} aqui de propósito - é assim que
+ * {@code EquipamentoRef.codigo} guarda (Jackson coage número pra String sem problema).
+ * {@code @JsonIgnoreProperties(ignoreUnknown = true)} torna a desserialização tolerante a campos
+ * extras que o NimbusFlowServer venha a incluir no futuro.
  */
 @Slf4j
 @Service
@@ -37,8 +42,8 @@ public class NimbusFlowInternalClient {
       String numeroPatrimonio,
       String descricao,
       String localizacaoAtual,
-      String status,
-      Instant updatedAt) {
+      String statusOperacional,
+      Instant atualizadoEm) {
   }
 
   private final RestClient restClient;

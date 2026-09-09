@@ -27,6 +27,10 @@ RUN ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+# postgresql-client (pg_dump) - exigido pela tela Configurações > Backup (BACKUP_PROCESS, ver
+# PgDumpRunner) - sem isso o backup sob demanda falha em produção com "pg_dump not found" (mesmo
+# pacote já presente no Dockerfile do NimbusFlowServer, que tem a mesma tela).
+RUN apk add --no-cache postgresql-client
 COPY --from=build /workspace/build/libs/*.jar app.jar
 EXPOSE 8080
 # Nota 4 (2026-09-07): achado real revisando as variáveis do Railway - JAVA_OPTS estava

@@ -108,8 +108,8 @@ public class EquipamentoSyncService {
     local.setCodigo(dto.numeroPatrimonio());
     local.setNome(dto.descricao());
     local.setLocalizacao(dto.localizacaoAtual());
-    local.setStatusOperacional(dto.status());
-    local.setAtualizadoEm(dto.updatedAt());
+    local.setStatusOperacional(dto.statusOperacional());
+    local.setAtualizadoEm(dto.atualizadoEm());
     local.setSincronizadoEm(Instant.now());
     equipamentoRefRepository.save(local);
   }
