@@ -78,4 +78,58 @@ public class NdSecurity {
   public boolean canManageUserGroups() {
     return currentUserProvider.hasAuthority("PERM_GROUPS_MANAGEMENT_USER");
   }
+
+  /* Módulo de negócio "Chamados de TI" (2026-09-07, migration
+   * V20260907_03__nimbusdesk_ticket_permissions_seed.sql no repo NimbusAuth). canConsultChamados/
+   * canManageChamados também são chamados IMPERATIVAMENTE dentro de com.nimbusdesk.tickets.core
+   * (não só via @CheckSecurity declarativo) - a visibilidade de um chamado específico depende de
+   * dado carregado em runtime (dono/responsável, "meus chamados"), não expressável só na
+   * assinatura do controller. */
+  public boolean canConsultChamados() {
+    return currentUserProvider.hasAuthority("PERM_CHAMADO_CONSULT");
+  }
+
+  public boolean canManageChamados() {
+    return currentUserProvider.hasAuthority("PERM_CHAMADO_MANAGE");
+  }
+
+  public boolean canConsultCategorias() {
+    return currentUserProvider.hasAuthority("PERM_CATEGORIA_CONSULT");
+  }
+
+  public boolean canManageCategorias() {
+    return currentUserProvider.hasAuthority("PERM_CATEGORIA_MANAGE");
+  }
+
+  public boolean canConsultSlas() {
+    return currentUserProvider.hasAuthority("PERM_SLA_CONSULT");
+  }
+
+  public boolean canManageSlas() {
+    return currentUserProvider.hasAuthority("PERM_SLA_MANAGE");
+  }
+
+  public boolean canConsultSetores() {
+    return currentUserProvider.hasAuthority("PERM_SETOR_TI_CONSULT");
+  }
+
+  public boolean canManageSetores() {
+    return currentUserProvider.hasAuthority("PERM_SETOR_TI_MANAGE");
+  }
+
+  /** Sem canManageEquipamentoRefs - só leitura, escrito exclusivamente pelo job de sincronização
+   *  (com.nimbusdesk.tickets.core.EquipamentoSyncService), nunca por um usuário via API. */
+  public boolean canConsultEquipamentoRefs() {
+    return currentUserProvider.hasAuthority("PERM_EQUIPAMENTO_REF_CONSULT");
+  }
+
+  /** Configurações &gt; Automação de chamados (2026-09-09, migration correspondente
+   *  V20260909_01__nimbusdesk_ticket_automation_permissions_seed.sql no repo NimbusAuth). */
+  public boolean canConsultTicketAutomation() {
+    return currentUserProvider.hasAuthority("PERM_TICKET_AUTOMATION_CONSULT");
+  }
+
+  public boolean canManageTicketAutomation() {
+    return currentUserProvider.hasAuthority("PERM_TICKET_AUTOMATION_MANAGE");
+  }
 }

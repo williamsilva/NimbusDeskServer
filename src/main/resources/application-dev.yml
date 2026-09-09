@@ -92,3 +92,26 @@ nimbus:
     brevo:
       base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
       api-key: ${BREVO_API_KEY:}
+
+  # Módulo "Chamados de TI" - integração com o NimbusFlowServer (com.nimbusdesk.common.security.
+  # NimbusFlowInternalClient/NimbusFlowInternalProperties). Default local (não containerizado)
+  # assume o NimbusFlowServer rodando nativamente na porta 9092 (convenção do workspace); o
+  # docker-compose.yml deste projeto sobrescreve pra http://host.docker.internal:9092 quando o
+  # NimbusDeskServer roda em container (mesmo padrão de NIMBUS_AUTH_INTERNAL_BASE_URL acima).
+  nimbusflow:
+    base-url: ${NIMBUS_FLOW_INTERNAL_BASE_URL:http://localhost:9092}
+    internal-api-secret: ${NIMBUS_FLOW_INTERNAL_SECRET:dev-flow-internal-secret-change-me}
+
+  # com.nimbusdesk.tickets.core.EquipamentoSyncService - intervalo entre execuções (ms). Default
+  # 20 minutos, conforme PROJECT_SPEC.md.
+  equipamento-sync:
+    interval-ms: ${NIMBUS_EQUIPAMENTO_SYNC_INTERVAL_MS:1200000}
+
+# S3-compatible object storage (MinIO local). Consumido por com.nimbusdesk.common.storage - anexos
+# de Chamado. Bucket próprio "nimbusdesk-attachments" (distinto do "nimbusflow-media" do
+# NimbusFlowServer).
+storage:
+  endpoint: ${NIMBUSDESK_STORAGE_ENDPOINT:http://localhost:9010}
+  access-key: ${NIMBUSDESK_STORAGE_ACCESS_KEY:nimbusdesk}
+  secret-key: ${NIMBUSDESK_STORAGE_SECRET_KEY:changeme-local-only}
+  bucket: ${NIMBUSDESK_STORAGE_BUCKET:nimbusdesk-attachments}

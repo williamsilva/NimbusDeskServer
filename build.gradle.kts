@@ -7,6 +7,10 @@ plugins {
 group = "com.nimbusdesk"
 version = "0.1.0-SNAPSHOT"
 
+// Mesma versão já usada pelo NimbusFlowServer (build.gradle.kts de lá) pro storage de anexos
+// (com.nimbusdesk.common.storage, MinIO S3-compatible) - módulo de negócio "Chamados de TI".
+val awssdkVersion = "2.46.18"
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
@@ -58,6 +62,12 @@ dependencies {
 	// CardsyncServer/NimbusAuthServer.
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.flywaydb:flyway-database-postgresql")
+
+	// com.nimbusdesk.common.storage (StorageService/S3StorageService, MinIO S3-compatible) - anexos
+	// de Chamado, portado de com.nimbusflow.common.storage (mesma versão do AWS SDK usada lá).
+	implementation(platform("software.amazon.awssdk:bom:$awssdkVersion"))
+	implementation("software.amazon.awssdk:s3")
+	implementation("software.amazon.awssdk:url-connection-client")
 
 	// com.nimbussystems.commons.audit (@Auditable/AuditAspect via Spring AOP). Boot 4 renomeou
 	// spring-boot-starter-aop -> spring-boot-starter-aspectj (mesmo achado do NimbusCommonsServer/

@@ -47,6 +47,16 @@ public class AdminUserService {
 
   private static final String NIMBUSDESK_APP_KEY = "nimbusdesk";
 
+  /** Usuário bootstrap global do NimbusAuth (UUID fixo 000...0001, criado por migration lá) - o
+   *  próprio NimbusAuth já filtra esse username em {@code GET /api/v1/users/search} (usado por
+   *  #list/#search aqui, via NimbusAuthAdminClient#searchAllUsers), mas NÃO filtra em
+   *  {@code GET /internal/users/options} (usado só por #options, endpoint machine-to-machine que
+   *  não passa pelo mesmo UserService#list do NimbusAuth) - por isso #options precisa do próprio
+   *  filtro aqui. Mesmo critério usado lá (username fixo, normalizado com trim+lowercase) - não é
+   *  flag de banco, é convenção; NimbusFlow/NimbusNovax têm essa mesma lacuna hoje (não corrigida
+   *  aqui de propósito, fora do escopo pedido). */
+  private static final String SUPPORT_USER_NAME = "suporte@nimbussystems.com.br";
+
   /** Espelha USER_STATUS_CODE_MAP do frontend (user-status.enum.ts) - o status cru do NimbusAuth
    *  é um Integer, mas os filtros (coluna e painel avançado) mandam os nomes do enum. */
   private static final Map<Integer, String> USER_STATUS_NAMES = Map.of(
@@ -84,9 +94,14 @@ public class AdminUserService {
    *  Chamados). */
   public List<AdminUserMinimalResponse> options() {
     return internalClient.fetchOptionsByAppKey(NIMBUSDESK_APP_KEY).stream()
+        .filter(u -> !isSupportUser(u.username()))
         .map(u -> new AdminUserMinimalResponse(u.id(), u.name(), u.username()))
         .sorted(Comparator.comparing(AdminUserMinimalResponse::name, String.CASE_INSENSITIVE_ORDER))
         .toList();
+  }
+
+  private static boolean isSupportUser(String username) {
+    return username != null && username.trim().equalsIgnoreCase(SUPPORT_USER_NAME);
   }
 
   /**

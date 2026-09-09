@@ -1,0 +1,141 @@
+# Sobe o backend do NimbusDesk (postgres+server) sozinho. Uso normal é via
+# ../docker-compose.yml (na raiz do produto, "include:" deste arquivo + do
+# NimbusDeskWeb/docker-compose.yml) - rode daqui direto só se quiser testar
+# isoladamente. As variáveis (${...}) são resolvidas contra o .env adjacente ao
+# arquivo TOP-LEVEL realmente executado: se subir por aqui, crie um .env nesta
+# pasta; se subir via include a partir da raiz, use o .env de lá (é o que os
+# outros devs fazem no dia a dia).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nimbusdesk
+      POSTGRES_PASSWORD: changeme-local-only
+      POSTGRES_DB: nimbusdesk
+    ports:
+      # IPv4 explícito (127.0.0.1) - o encaminhamento IPv6 do Docker Desktop pra portas publicadas
+      # tem travado indefinidamente em algumas máquinas Windows (handshake TCP completa, resposta
+      # HTTP nunca chega); "localhost" resolve IPv6 primeiro no Windows, então sem isso o
+      # navegador/cliente trava até o timeout antes de cair pro IPv4 que funciona.
+      # Porta 5434 no host (não 5432/5433) - evita conflitar com o Postgres do NimbusFlow/
+      # NimbusNovax (docker-compose próprio de cada um, portas 5432/5433) quando todos rodam lado
+      # a lado na mesma máquina. A comunicação server->postgres continua na porta interna 5432
+      # (rede do compose).
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nimbusdesk -d nimbusdesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # MinIO (S3-compatible) pros anexos de Chamado (com.nimbusdesk.common.storage) - mesmo padrão do
+  # NimbusFlowServer/docker-compose.yml, portas externas 9010/9011 (o minio do NimbusFlow já usa
+  # 9000/9001) pra rodar lado a lado sem colisão. Porta interna do container continua 9000/9001
+  # (rede do compose) - "mc alias set" abaixo aponta pra "minio:9000", não afetado pelo remapeamento
+  # externo.
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${NIMBUSDESK_MINIO_ROOT_USER:-nimbusdesk}
+      MINIO_ROOT_PASSWORD: ${NIMBUSDESK_MINIO_ROOT_PASSWORD:-changeme-local-only}
+    ports:
+      - "127.0.0.1:9010:9000"
+      - "127.0.0.1:9011:9001"
+    volumes:
+      - nimbusdesk-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      STORAGE_BUCKET: ${NIMBUSDESK_STORAGE_BUCKET:-nimbusdesk-attachments}
+      MINIO_ROOT_USER: ${NIMBUSDESK_MINIO_ROOT_USER:-nimbusdesk}
+      MINIO_ROOT_PASSWORD: ${NIMBUSDESK_MINIO_ROOT_PASSWORD:-changeme-local-only}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
+      mc mb --ignore-existing local/$$STORAGE_BUCKET
+      "
+
+  server:
+    build:
+      context: .
+      # GITHUB_ACTOR/GITHUB_TOKEN: build args, não "environment" (variável de serviço só chega ao
+      # CONTAINER em runtime, nunca ao processo de build do Dockerfile). Necessário pro Gradle
+      # baixar o com.nimbussystems:nimbus-commons-server do GitHub Packages - sem isto, `docker
+      # compose build` falha com "Username must not be null!" (mesmo achado já feito no
+      # NimbusFlow/NimbusNovax em 2026-09-07). Sete estas 2 vars num .env (não commitado) - mesmo
+      # GITHUB_ACTOR/GITHUB_TOKEN já usados em ~/.gradle/gradle.properties.
+      args:
+        GITHUB_ACTOR: ${GITHUB_ACTOR}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    ports:
+      # 9094 - próxima porta livre da convenção do workspace (NimbusAuth=9090, CardSync=9091,
+      # NimbusFlow=9092, NimbusNovax=9093), evita colidir com os backends já existentes quando
+      # todos rodam lado a lado na mesma máquina.
+      - "127.0.0.1:9094:9094"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: "9094"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: nimbusdesk
+      DB_USERNAME: nimbusdesk
+      DB_PASSWORD: changeme-local-only
+      # NimbusAuth também roda em container nesta workspace (nimbusauth-nimbus-auth-1), publicado
+      # em 127.0.0.1:9090 - mas o container do NimbusDesk não enxerga "localhost" do host, precisa
+      # do DNS especial do Docker Desktop. authorization-uri (NIMBUS_AUTH_ISSUER) é enviado ao
+      # BROWSER via redirect - precisa ser algo que o Windows resolva (localhost), não
+      # host.docker.internal (que só existe de dentro do container).
+      # NIMBUS_AUTH_INTERNAL_BASE_URL, por outro lado, é usado só em chamadas backend->backend
+      # (token/jwk-set/user-info) que acontecem de DENTRO do container - esse sim precisa de
+      # host.docker.internal. extra_hosts abaixo garante a resolução também no Linux (no Docker
+      # Desktop/Mac/Windows já funciona sem isso).
+      NIMBUS_AUTH_ISSUER: http://localhost:9090
+      NIMBUS_AUTH_INTERNAL_BASE_URL: http://host.docker.internal:9090
+      NIMBUSDESK_SPA_BASE_URL: http://localhost:4204
+      CORS_ALLOWED_ORIGINS: http://localhost:4204
+      # Client OAuth2 real, gerado pelo NimbusAuthWeb ao cadastrar o app "nimbusdesk" (tela Apps) -
+      # sete os 2 valores reais no .env (não commitado). Sem NIMBUSDESK_BFF_CLIENT_SECRET aqui, o
+      # backend cai no default de dev "changeit-dev" (aplicativo application-dev.yml), que nunca
+      # bate com o secret real gerado pelo NimbusAuth - login falha no token exchange (invalid_client).
+      NIMBUSDESK_BFF_CLIENT_ID: ${NIMBUSDESK_BFF_CLIENT_ID:-nimbusdesk-bff}
+      NIMBUSDESK_BFF_CLIENT_SECRET: ${NIMBUSDESK_BFF_CLIENT_SECRET:?defina NIMBUSDESK_BFF_CLIENT_SECRET no .env (client_secret real gerado ao cadastrar o app no NimbusAuthWeb)}
+      # Módulo "Chamados de TI" - storage de anexos (com.nimbusdesk.common.storage), endpoint
+      # interno do container minio acima (porta 9000, não afetada pelo remapeamento externo
+      # 9010/9011 - ver comentário do serviço "minio").
+      NIMBUSDESK_STORAGE_ENDPOINT: http://minio:9000
+      NIMBUSDESK_STORAGE_ACCESS_KEY: ${NIMBUSDESK_MINIO_ROOT_USER:-nimbusdesk}
+      NIMBUSDESK_STORAGE_SECRET_KEY: ${NIMBUSDESK_MINIO_ROOT_PASSWORD:-changeme-local-only}
+      NIMBUSDESK_STORAGE_BUCKET: ${NIMBUSDESK_STORAGE_BUCKET:-nimbusdesk-attachments}
+      # Sincronização de equipamentos (com.nimbusdesk.tickets.core.EquipamentoSyncService) -
+      # NimbusFlowServer roda em container próprio (repo NimbusFlow), publicado em
+      # 127.0.0.1:9092 - mas este container não enxerga "localhost" do host, precisa do DNS
+      # especial do Docker Desktop (mesmo racional de NIMBUS_AUTH_INTERNAL_BASE_URL acima).
+      NIMBUS_FLOW_INTERNAL_BASE_URL: ${NIMBUS_FLOW_INTERNAL_BASE_URL:-http://host.docker.internal:9092}
+      # Default IGUAL ao default do NimbusFlowServer (nimbus.flow-internal.secret em
+      # application-dev.yml, dev-flow-internal-secret-change-me) - funciona de fábrica em dev sem
+      # precisar de .env. Em produção, sete um valor real (aleatório) IGUAL nos dois lados via .env
+      # aqui e a env var correspondente no deploy do NimbusFlowServer.
+      NIMBUS_FLOW_INTERNAL_SECRET: ${NIMBUS_FLOW_INTERNAL_SECRET:-dev-flow-internal-secret-change-me}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  nimbusdesk-minio-data:

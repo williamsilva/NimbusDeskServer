@@ -87,3 +87,22 @@ nimbus:
     brevo:
       base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
       api-key: ${BREVO_API_KEY:}
+
+  # Módulo "Chamados de TI" - integração com o NimbusFlowServer (com.nimbusdesk.common.security.
+  # NimbusFlowInternalClient/NimbusFlowInternalProperties).
+  nimbusflow:
+    base-url: ${NIMBUS_FLOW_INTERNAL_BASE_URL}
+    internal-api-secret: ${NIMBUS_FLOW_INTERNAL_SECRET}
+
+  # com.nimbusdesk.tickets.core.EquipamentoSyncService - intervalo entre execuções (ms). Default
+  # 20 minutos, conforme PROJECT_SPEC.md.
+  equipamento-sync:
+    interval-ms: ${NIMBUS_EQUIPAMENTO_SYNC_INTERVAL_MS:1200000}
+
+# S3-compatible object storage. Consumido por com.nimbusdesk.common.storage - anexos de Chamado.
+storage:
+  endpoint: ${NIMBUSDESK_STORAGE_ENDPOINT}
+  access-key: ${NIMBUSDESK_STORAGE_ACCESS_KEY}
+  secret-key: ${NIMBUSDESK_STORAGE_SECRET_KEY}
+  bucket: ${NIMBUSDESK_STORAGE_BUCKET:nimbusdesk-attachments}
+  region: ${NIMBUSDESK_STORAGE_REGION:auto}

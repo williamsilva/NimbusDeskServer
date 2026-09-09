@@ -109,4 +109,89 @@ public @interface CheckSecurity {
     @interface CanManageUser {
     }
   }
+
+  /** CHAMADO_CONSULT/CHAMADO_MANAGE - usadas aqui só onde a checagem NÃO depende do chamado
+   *  específico carregado (ex.: dashboard). A visibilidade de {@code GET /{id}}/edição/comentário
+   *  ("meu chamado" OU CHAMADO_CONSULT/MANAGE) é checada imperativamente dentro de
+   *  com.nimbusdesk.tickets.core.TicketService via NdSecurity, não por esta anotação. */
+  @interface Ticket {
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canConsultChamados()")
+    @interface CanConsult {
+    }
+
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canManageChamados()")
+    @interface CanManage {
+    }
+  }
+
+  @interface Category {
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canConsultCategorias()")
+    @interface CanConsult {
+    }
+
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canManageCategorias()")
+    @interface CanManage {
+    }
+  }
+
+  @interface Sla {
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canConsultSlas()")
+    @interface CanConsult {
+    }
+
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canManageSlas()")
+    @interface CanManage {
+    }
+  }
+
+  @interface Setor {
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canConsultSetores()")
+    @interface CanConsult {
+    }
+
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canManageSetores()")
+    @interface CanManage {
+    }
+  }
+
+  @interface EquipamentoRef {
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canConsultEquipamentoRefs()")
+    @interface CanConsult {
+    }
+  }
+
+  /** Configurações &gt; Automação de chamados (2026-09-09) - periodicidade dos 3 jobs (alerta de
+   *  sem responsável, alerta de pendência de resposta, auto-fechamento), ver
+   *  com.nimbusdesk.tickets.model.TicketAutomationSettings. */
+  @interface TicketAutomation {
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canConsultTicketAutomation()")
+    @interface CanConsult {
+    }
+
+    @Target(METHOD)
+    @Retention(RUNTIME)
+    @PreAuthorize("@ndSecurity.canManageTicketAutomation()")
+    @interface CanManage {
+    }
+  }
 }
