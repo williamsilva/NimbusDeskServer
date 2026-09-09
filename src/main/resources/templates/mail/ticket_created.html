@@ -24,6 +24,9 @@
     .field-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: #94a3b8; padding-bottom: 2px; }
     .field-value { font-size: 13.5px; color: #0f172a; font-weight: bold; }
     .field-value.text { font-weight: normal; line-height: 1.5; }
+    .field-value.text p { margin: 0 0 8px 0; }
+    .field-value.text p:last-child { margin-bottom: 0; }
+    .field-value.text ul, .field-value.text ol { margin: 0 0 8px 0; padding-left: 20px; }
     .cta { display: inline-block; margin-top: 22px; background: #4338ca; color: #ffffff !important; text-decoration: none; font-size: 13px; font-weight: bold; padding: 11px 22px; border-radius: 8px; }
     .footer { padding: 20px 28px; text-align: center; font-size: 11px; color: #94a3b8; }
   </style>
@@ -57,7 +60,7 @@
 
               <div class="section-title">Descrição</div>
               <table role="presentation" width="100%" class="fields">
-                <tr><td><div class="field-value text" th:text="${descricao}">-</div></td></tr>
+                <tr><td><div class="field-value text" th:utext="${descricao}">-</div></td></tr>
               </table>
 
               <div class="section-title">Detalhes</div>
