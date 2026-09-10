@@ -2,6 +2,8 @@ package com.nimbusdesk.common.security;
 
 import com.nimbussystems.commons.security.NimbusSecurityProperties;
 
+import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
+
 import com.nimbussystems.commons.security.ResourceServerJwtBeans;
 
 import com.nimbussystems.commons.security.SpaCsrfTokenRequestHandler;
@@ -9,6 +11,8 @@ import com.nimbussystems.commons.security.SpaCsrfTokenRequestHandler;
 import com.nimbussystems.commons.security.OAuth2ClientHttpConfig;
 
 import com.nimbussystems.commons.security.CsrfCookieFilter;
+
+import com.nimbusdesk.common.security.internal.InternalBackupSecretFilter;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -44,6 +48,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.HeaderWriterFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
@@ -71,6 +76,31 @@ public class SecurityConfig {
   private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
   private final NimbusSecurityProperties props;
+
+  // ---------------------------
+  // 0) INTERNAL BACKUP CHAIN (/internal/backup/**) - machine-to-machine, chamada pelo NimbusAuth
+  // pra puxar o backup deste servidor (banco + arquivos), autenticado por secret compartilhado
+  // (ver InternalBackupSecretFilter), não por sessão/JWT. Reaproveita o MESMO secret já
+  // configurado em NimbusAuthProxyProperties (NIMBUS_INTERNAL_API_SECRET, usado hoje só pra
+  // CHAMAR o NimbusAuth/NimbusFlow) - nenhuma env var nova. @Order menor que apiChain (10) e
+  // bffChain (20) pra ser avaliada primeiro - o securityMatcher restrito a /internal/backup/**
+  // garante que ela nunca interfere nas outras duas.
+  // ---------------------------
+  @Bean
+  @Order(5)
+  public SecurityFilterChain internalBackupChain(
+      HttpSecurity http, NimbusAuthProxyProperties nimbusAuthProxyProperties) throws Exception {
+
+    http.securityMatcher("/internal/backup/**");
+    http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+    http.csrf(AbstractHttpConfigurer::disable);
+    http.cors(AbstractHttpConfigurer::disable);
+    http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+    http.addFilterBefore(
+        new InternalBackupSecretFilter(nimbusAuthProxyProperties.getInternalApiSecret()),
+        HeaderWriterFilter.class);
+    return http.build();
+  }
 
   // ---------------------------
   // 1) API CHAIN (/api/**) STATELESS
