@@ -40,7 +40,7 @@ dependencies {
 	// com.nimbusdesk.common (config/security/notification.mail/backup) reaproveita o que já foi
 	// extraído pro NimbusCommonsServer em vez de duplicar (ver README do NimbusCommonsServer pro
 	// que NÃO foi extraído e por quê).
-	implementation("com.nimbussystems:nimbus-commons-server:0.5.0")
+	implementation("com.nimbussystems:nimbus-commons-server:0.5.1")
 
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
