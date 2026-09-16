@@ -13,10 +13,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Portado de com.nimbusflow.common.storage.FileValidator - valida tipo MIME e tamanho máximo de
- * anexo enviado, antes de aceitar. PDF/Office/texto/zip (tipos novos, ver StorageProperties)
- * caem no {@code default -> true} do switch abaixo (aceitos pelo whitelist, sem checagem extra de
+ * anexo enviado, antes de aceitar. PDF/Office/texto (tipos novos, ver StorageProperties) caem no
+ * {@code default -> true} do switch abaixo (aceitos pelo whitelist, sem checagem extra de
  * assinatura binária) - mesmo comportamento já previsto e documentado no código original pra
- * qualquer tipo sem assinatura conhecida mapeada.
+ * qualquer tipo sem assinatura conhecida mapeada. Zip tem checagem própria (ver
+ * {@link #matchesDeclaredContentType}) - mesmo hardening já aplicado no NimbusFlowServer.
  */
 @Component
 @RequiredArgsConstructor
@@ -29,6 +30,13 @@ public class FileValidator {
   private static final byte[] PNG_SIGNATURE = { (byte) 0x89, 0x50, 0x4E, 0x47 };
   private static final byte[] RIFF_SIGNATURE = "RIFF".getBytes(StandardCharsets.US_ASCII);
   private static final byte[] WEBP_SIGNATURE = "WEBP".getBytes(StandardCharsets.US_ASCII);
+
+  /** ZIP (local file header) - assinatura da grande maioria dos .zip de verdade. Um .zip
+   *  totalmente vazio (só End of Central Directory, sem nenhuma entrada) começa com
+   *  EMPTY_ZIP_SIGNATURE em vez desta - aceito também abaixo pra não rejeitar esse caso de borda
+   *  legítimo (mesmo hardening do NimbusFlowServer). */
+  private static final byte[] ZIP_SIGNATURE = { 0x50, 0x4B, 0x03, 0x04 };
+  private static final byte[] EMPTY_ZIP_SIGNATURE = { 0x50, 0x4B, 0x05, 0x06 };
 
   private final StorageProperties props;
 
@@ -51,7 +59,7 @@ public class FileValidator {
 
   /**
    * Confere a assinatura binária real (magic bytes) do início do arquivo antes de aceitar, pros
-   * tipos de imagem suportados hoje (mesmo hardening do NimbusFlowServer). PDF/Office/texto/zip
+   * tipos de imagem e zip suportados hoje (mesmo hardening do NimbusFlowServer). PDF/Office/texto
    * (tipos novos deste app, sem vídeo) caem no {@code default -> true} - aceitos pelo whitelist
    * acima sem checagem extra, mesmo racional documentado no arquivo original.
    */
@@ -61,6 +69,8 @@ public class FileValidator {
       case "image/jpeg" -> startsWith(header, JPEG_SIGNATURE);
       case "image/png" -> startsWith(header, PNG_SIGNATURE);
       case "image/webp" -> startsWith(header, RIFF_SIGNATURE) && containsAt(header, 8, WEBP_SIGNATURE);
+      case "application/zip", "application/x-zip-compressed" ->
+          startsWith(header, ZIP_SIGNATURE) || startsWith(header, EMPTY_ZIP_SIGNATURE);
       default -> true;
     };
   }

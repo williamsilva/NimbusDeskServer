@@ -51,7 +51,10 @@ public class StorageProperties {
       "application/vnd.ms-excel",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "text/plain", "text/csv",
-      "application/zip");
+      // application/x-zip-compressed é a variante que o Windows Explorer costuma declarar pro
+      // mesmo arquivo .zip (achado real: upload de .zip rejeitado num comentário de chamado
+      // porque só "application/zip" estava na whitelist).
+      "application/zip", "application/x-zip-compressed");
 
   private Duration presignedUrlTtl = Duration.ofMinutes(5);
 }
