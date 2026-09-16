@@ -28,11 +28,6 @@ public class NdSecurity {
 
   private final CurrentUserProvider currentUserProvider;
 
-  /* Email Log */
-  public boolean canConsultEmailLog() {
-    return currentUserProvider.hasAuthority("PERM_EMAIL_LOG_CONSULT");
-  }
-
   /* User (segurança > usuários) */
   public boolean canConsultUsers() {
     return currentUserProvider.hasAuthority("PERM_USERS_CONSULT");

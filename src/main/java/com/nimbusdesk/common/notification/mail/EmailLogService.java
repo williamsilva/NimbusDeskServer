@@ -8,21 +8,20 @@ import com.nimbussystems.commons.notification.mail.EmailLogEntity;
 
 import com.nimbussystems.commons.notification.mail.EmailSenderService;
 
-import com.nimbussystems.commons.web.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Grava o log de envio/erro (email_log) - a listagem/busca (antes exposta em
+ *  BffEmailLogController/EmailLogModel/EmailLogSpecs, com a auditoria federada e centralizada no
+ *  NimbusAuthWeb - ver InternalEmailLogController) foi removida junto com a tela local (Fase 5 da
+ *  consolidação de Segurança). */
 @Service
 @RequiredArgsConstructor
 public class EmailLogService implements EmailDeliveryLogger {
 
   private final EmailLogRepository repository;
-  private final EmailLogSpecs emailLogSpecs;
 
   /** REQUIRES_NEW - um chamador futuro pode disparar o envio de dentro de uma transação
    *  @Transactional(readOnly = true) (ex.: um job agendado que lê e notifica) - sem propagação própria,
@@ -58,15 +57,6 @@ public class EmailLogService implements EmailDeliveryLogger {
         .errorMessage(truncate(ex.getMessage(), 1000))
         .requestedById(message.getRequestedById())
         .build());
-  }
-
-  /** Filtro/ordenação/paginação reais no banco via {@link EmailLogSpecs} (Specification). Só os
-   *  e-mails de negócio próprios (email_log, esta tabela) - não mescla com os de convite/reset de
-   *  senha do NimbusAuth. */
-  @Transactional(readOnly = true)
-  public Page<EmailLogEntity> search(SearchRequest request, Pageable pageable) {
-    Specification<EmailLogEntity> spec = emailLogSpecs.fromRequest(request);
-    return repository.findAll(spec, pageable);
   }
 
   private String joinRecipients(EmailSenderService.Message message) {

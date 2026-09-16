@@ -32,14 +32,6 @@ public @interface CheckSecurity {
   @interface Authenticated {
   }
 
-  @interface EmailLog {
-    @Target(METHOD)
-    @Retention(RUNTIME)
-    @PreAuthorize("@ndSecurity.canConsultEmailLog()")
-    @interface CanConsult {
-    }
-  }
-
   @interface User {
     @Target(METHOD)
     @Retention(RUNTIME)
