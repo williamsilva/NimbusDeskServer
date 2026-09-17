@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/internal/email-log")
 public class InternalEmailLogController {
 
+  /** Allow-list de ordenação (sortField do request -> propriedade real da entidade) - os únicos
+   *  campos que o painel "Auditoria dos Apps" do NimbusAuthWeb expõe pra sort. Campo ausente ou
+   *  desconhecido cai no fallback (sentAt desc), mesmo comportamento de antes desta feature. */
+  private static final Map<String, String> SORTABLE_FIELDS = Map.of(
+      "recipient", "recipients",
+      "subject", "subject",
+      "eventType", "eventType",
+      "status", "status",
+      "sentAt", "sentAt");
+
   private final EmailLogRepository repository;
 
   @GetMapping("/search")
@@ -39,7 +50,9 @@ public class InternalEmailLogController {
       @RequestParam(required = false) String eventType,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) String sentAtFrom,
-      @RequestParam(required = false) String sentAtTo) {
+      @RequestParam(required = false) String sentAtTo,
+      @RequestParam(required = false) String sortField,
+      @RequestParam(required = false) String sortOrder) {
 
     Instant from = parseInstant(sentAtFrom);
     Instant to = parseInstant(sentAtTo);
@@ -68,11 +81,20 @@ public class InternalEmailLogController {
       return cb.and(predicates.toArray(new Predicate[0]));
     };
 
-    Pageable pageable = PageRequest.of(Math.max(page, 0), size <= 0 ? 20 : size, Sort.by(Sort.Direction.DESC, "sentAt"));
+    Pageable pageable = PageRequest.of(Math.max(page, 0), size <= 0 ? 20 : size, resolveSort(sortField, sortOrder));
     Page<EmailLogEntity> result = repository.findAll(spec, pageable);
     List<ItemModel> content = result.getContent().stream().map(InternalEmailLogController::toItem).toList();
 
     return new PageModel(content, result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
+  }
+
+  private static Sort resolveSort(String sortField, String sortOrder) {
+    String property = SORTABLE_FIELDS.get(sortField);
+    if (property == null) {
+      return Sort.by(Sort.Direction.DESC, "sentAt");
+    }
+    Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder) ? Sort.Direction.ASC : Sort.Direction.DESC;
+    return Sort.by(direction, property);
   }
 
   private static EmailLogStatus parseStatus(String value) {
@@ -96,12 +118,13 @@ public class InternalEmailLogController {
         e.getStatus() == null ? null : e.getStatus().name(),
         e.getEventType(),
         e.getErrorMessage(),
-        e.getSentAt() == null ? null : e.getSentAt().toString());
+        e.getSentAt() == null ? null : e.getSentAt().toString(),
+        e.getBody());
   }
 
   public record ItemModel(
       String recipients, String subject, String template, String status, String eventType,
-      String errorMessage, String sentAt) {}
+      String errorMessage, String sentAt, String body) {}
 
   public record PageModel(List<ItemModel> content, int number, int size, long totalElements, int totalPages) {}
 }
