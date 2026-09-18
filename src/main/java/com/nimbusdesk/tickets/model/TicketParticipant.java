@@ -18,7 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
  * Participante do chamado - usuário adicionado (pelo solicitante ou por CHAMADO_MANAGE) pra
  * acompanhar/ver o chamado sem ser o solicitante nem o responsável ("compartilhado com"). Tabela
  * filha (1:N intra-módulo, {@code @ManyToOne} normal - mesma técnica de TicketComment/
- * TicketAttachment). {@code userId} é raw id do NimbusAuth (sem entidade de usuário local, mesmo
+ * TicketAttachment). {@code userId} é raw id do NimbusCore (sem entidade de usuário local, mesmo
  * padrão de {@code Ticket#solicitanteId}); nome resolvido em leitura via UserDirectoryService.
  */
 @Getter

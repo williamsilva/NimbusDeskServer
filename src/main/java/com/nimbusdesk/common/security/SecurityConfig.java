@@ -2,7 +2,7 @@ package com.nimbusdesk.common.security;
 
 import com.nimbussystems.commons.security.NimbusSecurityProperties;
 
-import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
+import com.nimbussystems.commons.security.NimbusCoreProxyProperties;
 
 import com.nimbussystems.commons.security.ResourceServerJwtBeans;
 
@@ -64,8 +64,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Padrão BFF (igual ao Cardsync, ver ADR em PROJECT_SPEC.md seção 2): duas security filter
- * chains independentes — API stateless (JWT emitido pelo NimbusAuth) e BFF stateful (sessão +
- * cookies + oauth2Login contra o NimbusAuth). Sem a camada extra de hardening (CSP/HSTS/
+ * chains independentes — API stateless (JWT emitido pelo NimbusCore) e BFF stateful (sessão +
+ * cookies + oauth2Login contra o NimbusCore). Sem a camada extra de hardening (CSP/HSTS/
  * correlation-id) que o Cardsync tem — fora de escopo aqui, ver checklist da Fase 1.
  */
 @Configuration
@@ -78,18 +78,18 @@ public class SecurityConfig {
   private final NimbusSecurityProperties props;
 
   // ---------------------------
-  // 0) INTERNAL BACKUP CHAIN (/internal/backup/**) - machine-to-machine, chamada pelo NimbusAuth
+  // 0) INTERNAL BACKUP CHAIN (/internal/backup/**) - machine-to-machine, chamada pelo NimbusCore
   // pra puxar o backup deste servidor (banco + arquivos), autenticado por secret compartilhado
   // (ver InternalBackupSecretFilter), não por sessão/JWT. Reaproveita o MESMO secret já
-  // configurado em NimbusAuthProxyProperties (NIMBUS_INTERNAL_API_SECRET, usado hoje só pra
-  // CHAMAR o NimbusAuth/NimbusFlow) - nenhuma env var nova. @Order menor que apiChain (10) e
+  // configurado em NimbusCoreProxyProperties (NIMBUS_INTERNAL_API_SECRET, usado hoje só pra
+  // CHAMAR o NimbusCore/NimbusFlow) - nenhuma env var nova. @Order menor que apiChain (10) e
   // bffChain (20) pra ser avaliada primeiro - o securityMatcher restrito a /internal/backup/**
   // garante que ela nunca interfere nas outras duas.
   // ---------------------------
   @Bean
   @Order(5)
   public SecurityFilterChain internalBackupChain(
-      HttpSecurity http, NimbusAuthProxyProperties nimbusAuthProxyProperties) throws Exception {
+      HttpSecurity http, NimbusCoreProxyProperties nimbusCoreProxyProperties) throws Exception {
 
     http.securityMatcher("/internal/backup/**");
     http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -97,20 +97,20 @@ public class SecurityConfig {
     http.cors(AbstractHttpConfigurer::disable);
     http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     http.addFilterBefore(
-        new InternalBackupSecretFilter(nimbusAuthProxyProperties.getInternalApiSecret()),
+        new InternalBackupSecretFilter(nimbusCoreProxyProperties.getInternalApiSecret()),
         HeaderWriterFilter.class);
     return http.build();
   }
 
   // ---------------------------
   // 0.1) INTERNAL EMAIL SETTINGS CHAIN (/internal/email-settings/**) - machine-to-machine, chamada
-  // pelo NimbusAuth pra centralizar a tela "E-mail dos Apps". Mesmo padrão exato da chain de
+  // pelo NimbusCore pra centralizar a tela "E-mail dos Apps". Mesmo padrão exato da chain de
   // backup acima (mesmo secret compartilhado, mesmo filtro InternalBackupSecretFilter).
   // ---------------------------
   @Bean
   @Order(6)
   public SecurityFilterChain internalEmailSettingsChain(
-      HttpSecurity http, NimbusAuthProxyProperties nimbusAuthProxyProperties) throws Exception {
+      HttpSecurity http, NimbusCoreProxyProperties nimbusCoreProxyProperties) throws Exception {
 
     http.securityMatcher("/internal/email-settings/**");
     http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -118,20 +118,20 @@ public class SecurityConfig {
     http.cors(AbstractHttpConfigurer::disable);
     http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     http.addFilterBefore(
-        new InternalBackupSecretFilter(nimbusAuthProxyProperties.getInternalApiSecret()),
+        new InternalBackupSecretFilter(nimbusCoreProxyProperties.getInternalApiSecret()),
         HeaderWriterFilter.class);
     return http.build();
   }
 
   // ---------------------------
   // 0.2) INTERNAL EMAIL LOG CHAIN (/internal/email-log/**) - machine-to-machine, chamada pelo
-  // NimbusAuth pra federar a tela central de Auditoria de E-mail. Mesmo padrão exato das 2 chains
+  // NimbusCore pra federar a tela central de Auditoria de E-mail. Mesmo padrão exato das 2 chains
   // internas acima (mesmo secret compartilhado, mesmo filtro InternalBackupSecretFilter).
   // ---------------------------
   @Bean
   @Order(7)
   public SecurityFilterChain internalEmailLogChain(
-      HttpSecurity http, NimbusAuthProxyProperties nimbusAuthProxyProperties) throws Exception {
+      HttpSecurity http, NimbusCoreProxyProperties nimbusCoreProxyProperties) throws Exception {
 
     http.securityMatcher("/internal/email-log/**");
     http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -139,7 +139,7 @@ public class SecurityConfig {
     http.cors(AbstractHttpConfigurer::disable);
     http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
     http.addFilterBefore(
-        new InternalBackupSecretFilter(nimbusAuthProxyProperties.getInternalApiSecret()),
+        new InternalBackupSecretFilter(nimbusCoreProxyProperties.getInternalApiSecret()),
         HeaderWriterFilter.class);
     return http.build();
   }
@@ -216,7 +216,7 @@ public class SecurityConfig {
   /**
    * PKCE no fluxo authorization_code: mesmo sendo um client confidential (client_secret_basic),
    * o code_verifier ainda protege contra um authorization code interceptado em trânsito.
-   * Combina com requireProofKey(true) no RegisteredClient do lado do NimbusAuth.
+   * Combina com requireProofKey(true) no RegisteredClient do lado do NimbusCore.
    */
   @Bean
   public OAuth2AuthorizationRequestResolver pkceAuthorizationRequestResolver(
@@ -280,7 +280,7 @@ public class SecurityConfig {
    * DefaultOAuth2UserService interno, que por padrão usa seu próprio {@code RestOperations} (um
    * {@code RestTemplate} sem timeout) - um terceiro cliente HTTP separado dos dois já corrigidos
    * (chamadas gerais via RestClientTimeoutConfig, renovação de refresh_token via
-   * OAuth2ClientHttpConfig). Sem isto, uma lentidão do NimbusAuth durante o /userinfo do login
+   * OAuth2ClientHttpConfig). Sem isto, uma lentidão do NimbusCore durante o /userinfo do login
    * trava a autenticação inteira até o gateway derrubar a conexão (504) - só reproduzido em contas
    * que precisam refazer o login completo (sessão nova ou invalidada, ver
    * BffAccessTokenService#clearSessionAndCookies), já que uma sessão com authorized client ainda

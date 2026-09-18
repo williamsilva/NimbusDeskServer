@@ -17,7 +17,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * @EnableJpaRepositories/@EntityScan são processados por um ImportBeanDefinitionRegistrar que
  * ignora esse filtro quando declarado direto na classe @SpringBootApplication, registrando (e o
  * refresh do contexto tentando inicializar) os repositórios JPA mesmo em slices sem
- * EntityManagerFactory nenhum (mesmo achado do NimbusFlowServer, rodando NimbusAuthClientTest de
+ * EntityManagerFactory nenhum (mesmo achado do NimbusFlowServer, rodando NimbusCoreClientTest de
  * verdade - "No bean named 'entityManagerFactory' available"). Numa classe separada, o filtro de
  * slice exclui esta @Configuration como excluiria qualquer @Service comum.
  *

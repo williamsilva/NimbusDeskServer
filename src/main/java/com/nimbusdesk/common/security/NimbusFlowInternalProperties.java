@@ -10,7 +10,7 @@ import org.springframework.validation.annotation.Validated;
  * Base URL do NimbusFlowServer alcançável PELO BACKEND + secret compartilhado (header
  * X-Internal-Secret) pra chamar a API interna machine-to-machine dele ({@code GET
  * /internal/v1/equipamentos}, ver NimbusFlowInternalClient/EquipamentoSyncService). Mesmo padrão
- * de {@code com.nimbussystems.commons.security.NimbusAuthProxyProperties}, mas local ao NimbusDesk
+ * de {@code com.nimbussystems.commons.security.NimbusCoreProxyProperties}, mas local ao NimbusDesk
  * (não faz parte da lib compartilhada nimbus-commons-server - é uma integração exclusiva
  * NimbusDesk-&gt;NimbusFlow, sem uso nos outros apps consumidores da lib).
  */

@@ -20,7 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * {@link SecurityConfig} para ter efeito.
  *
  * <p>Base mínima do NimbusDesk (2026-09-07): só os módulos Usuários/Grupos (BFF admin do
- * NimbusAuth) e Email Log ficam aqui. Configuração de E-mail (BffEmailSettingsController) e Backup
+ * NimbusCore) e Email Log ficam aqui. Configuração de E-mail (BffEmailSettingsController) e Backup
  * (BffBackupController) fazem sua própria checagem imperativa via {@link CurrentUserProvider}
  * direto (mesmo padrão de origem, sem passar por esta anotação) - ver os respectivos pacotes.
  */

@@ -14,7 +14,7 @@ import org.springframework.hateoas.server.core.Relation;
 
 /** Mesmo shape de {@link AdminGroupSummaryResponse} - ver
  *  {@code com.nimbusdesk.common.security.bff.admin.AdminUserModel} para o porquê dessa
- *  separação e da ausência de Specification/JPA aqui (dado remoto, NimbusAuth via HTTP). */
+ *  separação e da ausência de Specification/JPA aqui (dado remoto, NimbusCore via HTTP). */
 @Getter
 @Setter
 @NoArgsConstructor

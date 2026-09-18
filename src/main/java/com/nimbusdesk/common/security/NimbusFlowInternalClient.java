@@ -11,8 +11,8 @@ import org.springframework.web.client.RestClient;
 /**
  * Cliente HTTP interno (machine-to-machine) pro NimbusFlowServer - busca equipamentos atualizados
  * desde um timestamp (ver com.nimbusdesk.tickets.core.EquipamentoSyncService), mesmo mecanismo de
- * secret compartilhado (header X-Internal-Secret) já usado por {@link NimbusAuthInternalClient},
- * agora apontando pro NimbusFlowServer em vez do NimbusAuth (base URL/secret próprios, ver
+ * secret compartilhado (header X-Internal-Secret) já usado por {@link NimbusCoreInternalClient},
+ * agora apontando pro NimbusFlowServer em vez do NimbusCore (base URL/secret próprios, ver
  * {@link NimbusFlowInternalProperties}).
  *
  * <p><b>Endpoint consumido (GET {@code /internal/v1/equipamentos?atualizadoApos=...}) está sendo

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /** Grava o log de envio/erro (email_log) - a listagem/busca (antes exposta em
  *  BffEmailLogController/EmailLogModel/EmailLogSpecs, com a auditoria federada e centralizada no
- *  NimbusAuthWeb - ver InternalEmailLogController) foi removida junto com a tela local (Fase 5 da
+ *  NimbusCoreWeb - ver InternalEmailLogController) foi removida junto com a tela local (Fase 5 da
  *  consolidação de Segurança). */
 @Service
 @RequiredArgsConstructor
@@ -42,7 +42,7 @@ public class EmailLogService implements EmailDeliveryLogger {
         .build());
   }
 
-  /** REQUIRES_NEW - mesmo motivo do EmailLogService.logError no NimbusAuth: o registro do erro
+  /** REQUIRES_NEW - mesmo motivo do EmailLogService.logError no NimbusCore: o registro do erro
    *  precisa sobreviver mesmo que a transação que tentou enviar o e-mail seja revertida depois. */
   @Override
   @Transactional(propagation = Propagation.REQUIRES_NEW)

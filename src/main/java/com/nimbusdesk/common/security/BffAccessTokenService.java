@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 /**
  * Mesmo padrão do BffAccessTokenService do CardSyncServer: resolve (renovando se preciso, via
  * refresh_token) o access_token OAuth2 já em cache na sessão do usuário - usado só pra encaminhar
- * como Bearer nas chamadas server-to-server pro NimbusAuth (perfil, troca de senha). Nunca chega
+ * como Bearer nas chamadas server-to-server pro NimbusCore (perfil, troca de senha). Nunca chega
  * ao browser. OAuth2AuthorizedClientManager é autoconfigurado pelo Spring Boot (já existem
  * ClientRegistrationRepository e OAuth2AuthorizedClientRepository, vindos do oauth2Login()).
  */

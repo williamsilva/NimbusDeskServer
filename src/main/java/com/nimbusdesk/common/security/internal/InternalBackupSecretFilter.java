@@ -9,10 +9,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Protege /internal/backup/** (chamado pelo NimbusAuth pra puxar o backup deste servidor) -
- *  reaproveita o MESMO secret já configurado em NimbusAuthProxyProperties
+/** Protege /internal/backup/** (chamado pelo NimbusCore pra puxar o backup deste servidor) -
+ *  reaproveita o MESMO secret já configurado em NimbusCoreProxyProperties
  *  (nimbus.nimbusauth.internal-api-secret / NIMBUS_INTERNAL_API_SECRET), usado hoje só pra
- *  CHAMAR o NimbusAuth (ver NimbusAuthInternalClient) - valor já idêntico em todos os apps
+ *  CHAMAR o NimbusCore (ver NimbusCoreInternalClient) - valor já idêntico em todos os apps
  *  Nimbus no Railway, nenhuma env var nova. Mesmo padrão de
  *  com.nimbusflow.common.security.internal.InternalBackupSecretFilter (portado byte-a-byte). */
 public class InternalBackupSecretFilter extends OncePerRequestFilter {

@@ -1,6 +1,6 @@
 package com.nimbusdesk.tickets.core;
 
-import com.nimbusdesk.common.security.NimbusAuthInternalClient;
+import com.nimbusdesk.common.security.NimbusCoreInternalClient;
 import com.nimbussystems.commons.notification.mail.EmailSenderService;
 import com.nimbussystems.commons.security.NimbusSecurityProperties;
 import com.nimbussystems.commons.security.UserDirectoryService;
@@ -45,7 +45,7 @@ public class TicketNotificationService {
 
   private final EmailSenderService emailSenderService;
   private final UserDirectoryService userDirectoryService;
-  private final NimbusAuthInternalClient nimbusAuthInternalClient;
+  private final NimbusCoreInternalClient nimbusCoreInternalClient;
   private final TicketParticipantRepository participantRepository;
   private final NimbusSecurityProperties securityProperties;
 
@@ -230,14 +230,14 @@ public class TicketNotificationService {
    *  é resolvido ao vivo pela permissão (mesmo padrão de AddendumNotificationService/
    *  PaymentNotificationService no NimbusFlow - evita lista de e-mail manual desincronizada). Não
    *  degrada silenciosamente por completo (loga warn), mas retorna vazio em falha - uma
-   *  indisponibilidade do NimbusAuth não deve impedir a abertura do chamado em si. */
+   *  indisponibilidade do NimbusCore não deve impedir a abertura do chamado em si. */
   private List<String> resolveTiUserIds() {
     try {
-      return nimbusAuthInternalClient.fetchOptionsByPermission(NIMBUSDESK_APP_KEY, CHAMADO_MANAGE_PERMISSION).stream()
+      return nimbusCoreInternalClient.fetchOptionsByPermission(NIMBUSDESK_APP_KEY, CHAMADO_MANAGE_PERMISSION).stream()
           .map(u -> u.id().toString())
           .toList();
     } catch (Exception e) {
-      log.warn("Falha ao resolver usuários com CHAMADO_MANAGE no NimbusAuth: {}", e.getMessage());
+      log.warn("Falha ao resolver usuários com CHAMADO_MANAGE no NimbusCore: {}", e.getMessage());
       return List.of();
     }
   }

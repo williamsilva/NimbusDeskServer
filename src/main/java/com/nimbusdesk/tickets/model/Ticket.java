@@ -69,7 +69,7 @@ public class Ticket {
   @Column(name = "responsavel_id", length = 100)
   private String responsavelId;
 
-  /** "De quem é a vez de agir" - raw id do NimbusAuth (solicitante OU responsável, nunca um
+  /** "De quem é a vez de agir" - raw id do NimbusCore (solicitante OU responsável, nunca um
    *  participante). Atualizado em toda transição de status relevante (assign/changeStatus) e todo
    *  comentário PÚBLICO trocado entre solicitante/responsável - ver TicketService/
    *  TicketCommentService. {@code null} = ninguém pendente (chamado ainda não atribuído, ou

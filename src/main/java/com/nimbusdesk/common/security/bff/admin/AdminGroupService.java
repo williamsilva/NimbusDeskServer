@@ -22,9 +22,9 @@ import com.nimbussystems.commons.security.bff.admin.AdminGroupOptionResponse;
 
 import com.nimbussystems.commons.security.bff.admin.AdminFilterSupport;
 
-import com.nimbusdesk.common.security.NimbusAuthAdminClient;
-import com.nimbusdesk.common.security.NimbusAuthAdminClient.RawGroup;
-import com.nimbusdesk.common.security.NimbusAuthAdminClient.RawGroupInput;
+import com.nimbusdesk.common.security.NimbusCoreAdminClient;
+import com.nimbusdesk.common.security.NimbusCoreAdminClient.RawGroup;
+import com.nimbusdesk.common.security.NimbusCoreAdminClient.RawGroupInput;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -39,15 +39,15 @@ import org.springframework.stereotype.Service;
 
 /**
  * Administração de grupos (menu Segurança) - só grupos/permissões do NimbusDesk
- * (NimbusAuthAdminClient já escopa por appKey=nimbusdesk nas leituras). Gerencia membros do grupo
+ * (NimbusCoreAdminClient já escopa por appKey=nimbusdesk nas leituras). Gerencia membros do grupo
  * por aqui também (GROUPS_MANAGEMENT_USER/PUT .../users), além do caminho já existente pela tela
- * de Usuários (AdminUserRequest.groupIds) - os dois convergem pro mesmo endpoint no NimbusAuth.
+ * de Usuários (AdminUserRequest.groupIds) - os dois convergem pro mesmo endpoint no NimbusCore.
  */
 @Service
 @RequiredArgsConstructor
 public class AdminGroupService {
 
-  private final NimbusAuthAdminClient client;
+  private final NimbusCoreAdminClient client;
 
   /** Listagem completa (com contadores/data/autor, ver AdminGroupSummaryResponse) - usa
    *  /groups/search em vez de /groups/options porque este último não traz esses campos. */
@@ -91,7 +91,7 @@ public class AdminGroupService {
         .toList();
   }
 
-  /** Sem paginação/filtro real no NimbusAuth pra esse recorte - ver
+  /** Sem paginação/filtro real no NimbusCore pra esse recorte - ver
    *  {@link com.nimbusdesk.common.security.bff.admin.AdminUserService#search} para o padrão
    *  (mesmo motivo de embrulhar numa {@link PageImpl}). */
   public Page<AdminGroupSummaryResponse> search(String accessToken, AdminSearchRequest request) {

@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
  * Spring a partir do nome da classe) — não renomear sem atualizar as expressões em
  * {@link CheckSecurity}.
  *
- * <p>Nomes de permissão aqui batem exatamente com o contrato fechado seedado no NimbusAuth pro
- * app_key "nimbusdesk" (ver migration correspondente no repo NimbusAuth): SUPPORT, USERS_CONSULT,
+ * <p>Nomes de permissão aqui batem exatamente com o contrato fechado seedado no NimbusCore pro
+ * app_key "nimbusdesk" (ver migration correspondente no repo NimbusCore): SUPPORT, USERS_CONSULT,
  * USERS_CREATE, USERS_CHANGE, USERS_DELETE, USERS_ACTIVE_OR_INACTIVE, USERS_RESEND_INVITE,
  * GROUPS_CONSULT, GROUPS_CREATE, GROUPS_CHANGE, GROUPS_DELETE, GROUPS_ACTIVE_OR_INACTIVE,
  * GROUPS_MANAGEMENT_USER, GROUPS_MANAGEMENT_PERMISSION, EMAIL_SETTINGS_CONSULT,
@@ -75,7 +75,7 @@ public class NdSecurity {
   }
 
   /* Módulo de negócio "Chamados de TI" (2026-09-07, migration
-   * V20260907_03__nimbusdesk_ticket_permissions_seed.sql no repo NimbusAuth). canConsultChamados/
+   * V20260907_03__nimbusdesk_ticket_permissions_seed.sql no repo NimbusCore). canConsultChamados/
    * canManageChamados também são chamados IMPERATIVAMENTE dentro de com.nimbusdesk.tickets.core
    * (não só via @CheckSecurity declarativo) - a visibilidade de um chamado específico depende de
    * dado carregado em runtime (dono/responsável, "meus chamados"), não expressável só na
@@ -119,7 +119,7 @@ public class NdSecurity {
   }
 
   /** Configurações &gt; Automação de chamados (2026-09-09, migration correspondente
-   *  V20260909_01__nimbusdesk_ticket_automation_permissions_seed.sql no repo NimbusAuth). */
+   *  V20260909_01__nimbusdesk_ticket_automation_permissions_seed.sql no repo NimbusCore). */
   public boolean canConsultTicketAutomation() {
     return currentUserProvider.hasAuthority("PERM_TICKET_AUTOMATION_CONSULT");
   }

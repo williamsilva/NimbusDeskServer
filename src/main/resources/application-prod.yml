@@ -43,7 +43,7 @@ server:
         secure: true
         same-site: LAX
 
-# Fase 2 do levantamento de duplicação: security/nimbusauth/email eram nimbusdesk.* aqui -
+# Fase 2 do levantamento de duplicação: security/nimbuscore/email eram nimbusdesk.* aqui -
 # viraram nimbus.* (prefixo neutro compartilhado com NimbusCommonsServer), com os mesmos env vars
 # de sempre do lado direito (nenhuma mudança de env var no Railway, só o caminho na YAML).
 nimbus:
@@ -64,10 +64,10 @@ nimbus:
       allowed-origins:
         - ${NIMBUSDESK_ALLOWED_ORIGIN}
 
-  nimbusauth:
+  nimbuscore:
     base-url: ${NIMBUS_AUTH_ISSUER}
-    # Mesmo secret compartilhado já configurado no NimbusAuth e no CardsyncServer (Railway) -
-    # protege /internal/users (NimbusAuthInternalClient/UserDirectoryService).
+    # Mesmo secret compartilhado já configurado no NimbusCore e no CardsyncServer (Railway) -
+    # protege /internal/users (NimbusCoreInternalClient/UserDirectoryService).
     internal-api-secret: ${NIMBUS_INTERNAL_API_SECRET}
 
   # com.nimbussystems.commons.notification.mail.EmailProperties - default "fake" DE PROPÓSITO

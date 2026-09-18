@@ -17,7 +17,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: false
 
-  # Sessão HTTP do BFF (cookie), separada da sessão de login do NimbusAuth. Schema criado via
+  # Sessão HTTP do BFF (cookie), separada da sessão de login do NimbusCore. Schema criado via
   # Flyway (V2__spring_session_schema.sql), não pelo Spring Session.
   session:
     store-type: jdbc

@@ -20,9 +20,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 /**
  * Setor de TI - Configurações &gt; Setores. Mesmo desenho do {@code com.nimbusflow.tickets.model.
- * Department}: {@code userIds} guarda só os ids do NimbusAuth (sem entidade própria de usuário
+ * Department}: {@code userIds} guarda só os ids do NimbusCore (sem entidade própria de usuário
  * local). Sufixo "_TI" nas permissões (SETOR_TI_CONSULT/SETOR_TI_MANAGE) é só de nomenclatura no
- * NimbusAuth (ver PROJECT_SPEC.md) - não afeta esta entidade. Sem setor reservado tipo "Gestor"
+ * NimbusCore (ver PROJECT_SPEC.md) - não afeta esta entidade. Sem setor reservado tipo "Gestor"
  * nesta fase.
  */
 @Getter

@@ -1,7 +1,7 @@
 package com.nimbusdesk.tickets.core;
 
 import com.nimbusdesk.common.security.NdSecurity;
-import com.nimbusdesk.common.security.NimbusAuthInternalClient;
+import com.nimbusdesk.common.security.NimbusCoreInternalClient;
 import com.nimbussystems.commons.security.CurrentUserProvider;
 import com.nimbussystems.commons.security.UserDirectoryService;
 import com.nimbussystems.commons.security.bff.admin.AdminUserMinimalResponse;
@@ -91,7 +91,7 @@ public class TicketService {
   private final TicketCommentService ticketCommentService;
   private final TicketEventBroadcaster ticketEventBroadcaster;
   private final TicketNotificationService ticketNotificationService;
-  private final NimbusAuthInternalClient nimbusAuthInternalClient;
+  private final NimbusCoreInternalClient nimbusCoreInternalClient;
   private final CurrentUserProvider currentUserProvider;
   private final UserDirectoryService userDirectoryService;
   private final NdSecurity ndSecurity;
@@ -196,12 +196,12 @@ public class TicketService {
     }
 
     try {
-      return nimbusAuthInternalClient.fetchOptionsByPermission(NIMBUSDESK_APP_KEY, CHAMADO_MANAGE_PERMISSION).stream()
+      return nimbusCoreInternalClient.fetchOptionsByPermission(NIMBUSDESK_APP_KEY, CHAMADO_MANAGE_PERMISSION).stream()
           .map(u -> new AdminUserMinimalResponse(u.id(), u.name(), u.username()))
           .sorted(Comparator.comparing(AdminUserMinimalResponse::name, String.CASE_INSENSITIVE_ORDER))
           .toList();
     } catch (Exception e) {
-      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to resolve CHAMADO_MANAGE users from NimbusAuth", e);
+      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to resolve CHAMADO_MANAGE users from NimbusCore", e);
     }
   }
 
@@ -569,7 +569,7 @@ public class TicketService {
 
   /**
    * Substitui a lista inteira de participantes (mesmo padrão "replace all" já usado em
-   * Setor#userIds/grupos do NimbusAuth) - exige ser o solicitante OU CHAMADO_MANAGE. O próprio
+   * Setor#userIds/grupos do NimbusCore) - exige ser o solicitante OU CHAMADO_MANAGE. O próprio
    * solicitante/responsável nunca precisa estar na lista (já são "meus chamados" por definição,
    * ver TicketVisibility) - se vierem no payload, são ignorados silenciosamente aqui.
    */

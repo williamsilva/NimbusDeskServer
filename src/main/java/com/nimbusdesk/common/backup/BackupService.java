@@ -1,6 +1,6 @@
 package com.nimbusdesk.common.backup;
 
-import com.nimbusdesk.common.security.NimbusAuthInternalClient;
+import com.nimbusdesk.common.security.NimbusCoreInternalClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +27,7 @@ public class BackupService {
 
   private final PgDumpRunner pgDumpRunner;
   private final S3VolumeZipper s3VolumeZipper;
-  private final NimbusAuthInternalClient nimbusAuthInternalClient;
+  private final NimbusCoreInternalClient nimbusCoreInternalClient;
 
   public byte[] execute(List<BackupTarget> targets) {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -38,7 +38,7 @@ public class BackupService {
         addEntry(zipOut, "nimbusdesk.dump", "banco nimbusdesk", pgDumpRunner::dump, errors);
       }
       if (targets.contains(BackupTarget.NIMBUSAUTH_DB)) {
-        addEntry(zipOut, "nimbusauth.dump", "banco nimbusauth", nimbusAuthInternalClient::fetchDatabaseBackup, errors);
+        addEntry(zipOut, "nimbusauth.dump", "banco nimbusauth", nimbusCoreInternalClient::fetchDatabaseBackup, errors);
       }
       if (targets.contains(BackupTarget.FILES)) {
         try {

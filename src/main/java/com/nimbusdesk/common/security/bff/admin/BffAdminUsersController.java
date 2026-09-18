@@ -34,11 +34,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Menu "Segurança" &gt; Usuários - administração (não self-service, ver BffAccountController pra
  * "Minha conta"). Só usuários vinculados a algum grupo do NimbusDesk (ver AdminUserService.list) -
- * usuários são globais no NimbusAuth, mas o NimbusDeskWeb não deve expor o diretório completo
+ * usuários são globais no NimbusCore, mas o NimbusDeskWeb não deve expor o diretório completo
  * (outros apps Nimbus, ex.: Cardsync).
  *
- * <p>Sem exclusão física (o NimbusAuth não tem esse endpoint - só ativar/desativar) e sem reset de
- * senha pelo admin (não existe no NimbusAuth - o único mecanismo é reenviar convite, que gera um
+ * <p>Sem exclusão física (o NimbusCore não tem esse endpoint - só ativar/desativar) e sem reset de
+ * senha pelo admin (não existe no NimbusCore - o único mecanismo é reenviar convite, que gera um
  * novo token de definição de senha pro próprio usuário).
  */
 @RestController

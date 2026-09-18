@@ -1,6 +1,6 @@
 package com.nimbusdesk.common.security;
 
-import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
+import com.nimbussystems.commons.security.NimbusCoreProxyProperties;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
@@ -17,10 +17,10 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Chamadas server-to-server pro NimbusAuth - administração de usuários e grupos (não self-service,
- * ver NimbusAuthClient pra isso). Sempre escopado a app_key="nimbusdesk" nas leituras (grupos e
- * permissões são catalogados por app, ver GroupService no NimbusAuth); usuários são globais no
- * NimbusAuth (sem app_key), o filtro pro que "pertence ao NimbusDesk" é feito em AdminUserService
+ * Chamadas server-to-server pro NimbusCore - administração de usuários e grupos (não self-service,
+ * ver NimbusCoreClient pra isso). Sempre escopado a app_key="nimbusdesk" nas leituras (grupos e
+ * permissões são catalogados por app, ver GroupService no NimbusCore); usuários são globais no
+ * NimbusCore (sem app_key), o filtro pro que "pertence ao NimbusDesk" é feito em AdminUserService
  * (pelo appKey dos grupos do usuário), não aqui - este client só espelha o wire format cru.
  *
  * <p>Sem paginação real: /api/v1/users/search é chamado com uma página só (tamanho grande) - o
@@ -29,20 +29,20 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Slf4j
 @Service
-public class NimbusAuthAdminClient {
+public class NimbusCoreAdminClient {
 
   private static final String APP_KEY = "nimbusdesk";
   private static final int PAGE_SIZE = 500;
 
   private final RestClient restClient;
 
-  public NimbusAuthAdminClient(RestClient.Builder restClientBuilder, NimbusAuthProxyProperties props) {
+  public NimbusCoreAdminClient(RestClient.Builder restClientBuilder, NimbusCoreProxyProperties props) {
     this.restClient = restClientBuilder.baseUrl(props.getBaseUrl()).build();
   }
 
   // ------------------------- Usuários -------------------------
 
-  /** POST /api/v1/users/search - sem filtro (todos os usuários globais do NimbusAuth; o recorte
+  /** POST /api/v1/users/search - sem filtro (todos os usuários globais do NimbusCore; o recorte
    *  "vinculado ao NimbusDesk" é aplicado depois, em AdminUserService, pelo appKey dos groups). */
   public List<RawUser> searchAllUsers(String accessToken) {
     try {
@@ -277,13 +277,13 @@ public class NimbusAuthAdminClient {
     }
   }
 
-  // ------------------------- Wire format (espelha os *Model/*Input do NimbusAuth) -------------------------
+  // ------------------------- Wire format (espelha os *Model/*Input do NimbusCore) -------------------------
 
   public record RawGroupOption(UUID id, String name, String description, String appKey) {}
 
   public record RawPermissionOption(UUID id, String name, String description, String appKey) {}
 
-  /** Espelha UserMinimalModel do NimbusAuth (id/name/userName) - só usado como "quem cadastrou". */
+  /** Espelha UserMinimalModel do NimbusCore (id/name/userName) - só usado como "quem cadastrou". */
   public record RawUserMinimal(UUID id, String name, String userName) {}
 
   public record RawGroup(
@@ -333,7 +333,7 @@ public class NimbusAuthAdminClient {
     }
   }
 
-  /** Mesmo mapeamento de erro do NimbusAuthClient (perfil/senha) - repassa o "code" de um 4xx
+  /** Mesmo mapeamento de erro do NimbusCoreClient (perfil/senha) - repassa o "code" de um 4xx
    *  conhecido, qualquer outra falha vira 502 genérico. */
   private ResponseStatusException mapUpstreamError(RestClientResponseException e) {
     HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());

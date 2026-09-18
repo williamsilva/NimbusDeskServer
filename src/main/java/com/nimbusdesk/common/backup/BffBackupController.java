@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * Menu "Configurações &gt; Backup" - sessão/cookie (chain /bff/**, não JWT), mesmo padrão de
  * BffEmailSettingsController. Permissão própria do app nimbusdesk (BACKUP_PROCESS), seedada via
- * migration no repo NimbusAuth (fora deste repo). Portado de com.nimbusflow.common.backup
+ * migration no repo NimbusCore (fora deste repo). Portado de com.nimbusflow.common.backup
  * (NimbusFlowServer) em 2026-09-07 - ver BackupTarget para a diferença de escopo (sem FILES/S3).
  */
 @RestController

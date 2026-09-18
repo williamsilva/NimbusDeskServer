@@ -48,7 +48,7 @@ public class BffLogoutController {
       OAuth2AuthorizedClient authorizedClient =
           authorizedClientRepository.loadAuthorizedClient(REGISTRATION_ID, auth, request);
 
-      // RP-Initiated Logout (OIDC): sem isso, o NimbusAuth mantém sua própria sessão de login
+      // RP-Initiated Logout (OIDC): sem isso, o NimbusCore mantém sua própria sessão de login
       // válida e o próximo /oauth2/authorize reautentica via SSO silenciosamente.
       String idTokenHint = resolveIdTokenHint(auth, authorizedClient);
       if (idTokenHint != null) {
@@ -74,10 +74,10 @@ public class BffLogoutController {
   /**
    * O id_token guardado na sessão (OidcUser, fixado no login original) fica órfão rápido: cada
    * refresh silencioso do access_token (automático, a cada poucos minutos - ver access-token-ttl
-   * no NimbusAuth) SUBSTITUI o id_token daquela authorization no NimbusAuth, e o /connect/logout
+   * no NimbusCore) SUBSTITUI o id_token daquela authorization no NimbusCore, e o /connect/logout
    * rejeita com invalid_token qualquer id_token_hint que não bata com o que está lá agora (ver
    * OidcLogoutAuthenticationProvider) - sem um id_token válido, a revogação de tokens no logout
-   * (RevokeTokensLogoutHandler, do lado do NimbusAuth) nunca chega a rodar.
+   * (RevokeTokensLogoutHandler, do lado do NimbusCore) nunca chega a rodar.
    *
    * <p>Por isso pedimos aqui um id_token fresco via grant refresh_token direto contra o token
    * endpoint - fora do OAuth2AuthorizedClientManager padrão, que não expõe id_token (só

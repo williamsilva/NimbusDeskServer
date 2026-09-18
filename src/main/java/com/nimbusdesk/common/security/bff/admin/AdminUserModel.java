@@ -17,7 +17,7 @@ import org.springframework.hateoas.server.core.Relation;
 
 /** Mesmo shape de {@link AdminUserResponse} - usado só pelo endpoint de busca paginada, um record
  *  "Response" simples não serve de {@link RepresentationModel} (precisa ser uma classe mutável
- *  sem construtor de argumentos, ver {@code PagedResourcesAssembler}). Dado remoto (NimbusAuth via
+ *  sem construtor de argumentos, ver {@code PagedResourcesAssembler}). Dado remoto (NimbusCore via
  *  HTTP) - sem Specification/JPA possível aqui, só o envelope de resposta muda pra ficar
  *  consistente com as demais telas (ver AdminUserService.search). */
 @Getter
