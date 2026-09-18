@@ -54,7 +54,7 @@ nimbus:
   security:
     # Issuer do NimbusCore (real, rodando localmente fora do docker-compose - nem o NimbusCore
     # nem o Cardsync são dockerizados nesta workspace).
-    issuer: ${NIMBUS_AUTH_ISSUER:http://localhost:9090}
+    issuer: ${NIMBUS_CORE_ISSUER:http://localhost:9090}
 
     cookies:
       domain: ${NIMBUSDESK_COOKIE_DOMAIN:}
